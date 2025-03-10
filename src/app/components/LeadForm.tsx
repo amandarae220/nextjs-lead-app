@@ -29,6 +29,14 @@ const TextArea = styled.textarea`
   border-radius: 5px;
 `;
 
+const Select = styled.select`
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+`;
+
 const Button = styled.button`
   background-color: #0070f3;
   color: white;
@@ -39,6 +47,16 @@ const Button = styled.button`
   &:hover {
     background-color: #005bb5;
   }
+`;
+
+const ConfirmationMessage = styled.div`
+  background-color: #d4edda;
+  color: #155724;
+  padding: 10px;
+  border: 1px solid #c3e6cb;
+  border-radius: 5px;
+  margin-top: 10px;
+  text-align: center;
 `;
 
 interface FormData {
@@ -62,9 +80,10 @@ export default function LeadForm() {
     additionalInfo: ''
   });
 
+  const [submitted, setSubmitted] = useState(false);
   const router = useRouter();
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
@@ -77,31 +96,44 @@ export default function LeadForm() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    const response = await fetch('/api/leads', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData)
-    });
-    if (response.ok) {
-      alert('Lead submitted successfully!');
-      router.push('/thank-you');
-    } else {
-      alert('Error submitting the form. Please try again.');
+    try {
+      const response = await fetch('/api/leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      if (response.ok) {
+        setSubmitted(true);
+      } else {
+        alert('Error submitting the form. Please try again.');
+      }
+    } catch (error) {
+      alert('Network error. Please try again later.');
     }
   };
 
   return (
     <FormContainer>
       <h2>Submit Your Information</h2>
-      <form onSubmit={handleSubmit}>
-        <Input type="text" name="firstName" placeholder="First Name" onChange={handleChange} required />
-        <Input type="text" name="lastName" placeholder="Last Name" onChange={handleChange} required />
-        <Input type="email" name="email" placeholder="Email" onChange={handleChange} required />
-        <Input type="url" name="linkedin" placeholder="LinkedIn Profile" onChange={handleChange} required />
-        <Input type="file" name="resume" onChange={handleFileChange} required />
-        <TextArea name="additionalInfo" placeholder="Additional Information" onChange={handleChange} />
-        <Button type="submit">Submit</Button>
-      </form>
+      {submitted ? (
+        <ConfirmationMessage>Thank you for your submission! We will review your information and get back to you.</ConfirmationMessage>
+      ) : (
+        <form onSubmit={handleSubmit}>
+          <Input type="text" name="firstName" placeholder="First Name" onChange={handleChange} required />
+          <Input type="text" name="lastName" placeholder="Last Name" onChange={handleChange} required />
+          <Input type="email" name="email" placeholder="Email" onChange={handleChange} required />
+          <Input type="url" name="linkedin" placeholder="LinkedIn Profile" onChange={handleChange} required />
+          <Select name="visas" multiple onChange={handleChange} required>
+            <option value="H1B">H1B</option>
+            <option value="L1">L1</option>
+            <option value="O1">O1</option>
+            <option value="TN">TN</option>
+          </Select>
+          <Input type="file" name="resume" onChange={handleFileChange} required />
+          <TextArea name="additionalInfo" placeholder="Additional Information" onChange={handleChange} />
+          <Button type="submit">Submit</Button>
+        </form>
+      )}
     </FormContainer>
   );
 }
